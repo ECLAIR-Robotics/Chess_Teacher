@@ -1,4 +1,4 @@
-# xArm-Python-SDK
+# xArm-Python-SDK for Chess  Teaching
 
 ## Overview
 xArm Python SDK
