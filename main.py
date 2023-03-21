@@ -2,6 +2,7 @@ import sys
 import os
 import numpy as np
 import time
+import pickle
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -114,10 +115,11 @@ def calibrate():
 
     print("CHECKING MOVEMENT FREEDOM...")
 
+
     directedMode()
 
     Arm_constants.ARM.open_lite6_gripper()
-
+    Arm_constants.ARM.stop_lite6_gripper()
     Arm_constants.ARM.set_position(Arm_constants.SQUARE_LOCATIONS[0][0][0], Arm_constants.SQUARE_LOCATIONS[0][0][1], Arm_constants.POS_Z_HIGHEST_PIECE, 180, 0, 0, None, 100, 50, wait=True)
 
     Arm_constants.ARM.set_position(Arm_constants.SQUARE_LOCATIONS[7][0][0], Arm_constants.SQUARE_LOCATIONS[7][0][1], Arm_constants.POS_Z_HIGHEST_PIECE, 180, 0, 0, None, 100, 50, wait=True)
@@ -129,7 +131,7 @@ def calibrate():
     Arm_constants.ARM.set_position(Arm_constants.SQUARE_LOCATIONS[0][0][0], Arm_constants.SQUARE_LOCATIONS[0][0][1], Arm_constants.POS_Z_HIGHEST_PIECE, 180, 0, 0, None, 100, 50, wait=True)
 
     # code that outline board here
-
+    saveCalibration()
     print("CALIBRATION COMPLETE!")
     
 
@@ -211,15 +213,36 @@ def directedMode():
 
 def pickupPiece():
     Arm_constants.ARM.open_lite6_gripper()
+    Arm_constants.ARM.stop_lite6_gripper()
     time.sleep(1)
+    
 
     curPos = Arm_constants.ARM.position
     Arm_constants.ARM.set_position(curPos[0], curPos[1], Arm_constants.POS_Z_BOARD, 180, 0, 0, None, 100, 50, wait=True)
 
-    Arm_constants.ARM.close_lite6_gripper()
+    Arm_constants.ARM.close_lite6_gripper(wait = True)
     time.sleep(1)
-
+    Arm_constants.ARM.stop_lite6_gripper()
     Arm_constants.ARM.set_position(curPos[0], curPos[1], Arm_constants.POS_Z_HIGHEST_PIECE, 180, 0, 0, None, 100, 50, wait=True)
+
+def saveCalibration(): #save POZ_Z_BOARD and SQUARE_LOCATIONS
+    choice = input("Save calibration? (y/n): ")
+    if choice == 'y':
+        with open('calibration.dat', 'wb') as f:
+            pickle.dump(Arm_constants.POS_Z_BOARD, f)
+            pickle.dump(Arm_constants.SQUARE_LOCATIONS, f)
+            print("Calibration saved!")
+
+def getSavedCalibration(): #get POZ_Z_BOARD and SQUARE_LOCATIONS
+    try:
+        with open('calibration.txt', 'rb') as f:
+            Arm_constants.POS_Z_BOARD = pickle.load(f)
+            Arm_constants.SQUARE_LOCATIONS = pickle.load(f)
+            print("Calibration loaded!")
+            return True
+    except:
+        print("No saved calibration found!")
+        return False
 
 def dropPiece():
     curPos = Arm_constants.ARM.position
@@ -227,7 +250,7 @@ def dropPiece():
 
     Arm_constants.ARM.open_lite6_gripper()
     time.sleep(1)
-
+    Arm_constants.ARM.stop_lite6_gripper()
     Arm_constants.ARM.set_position(curPos[0], curPos[1], Arm_constants.POS_Z_HIGHEST_PIECE, 180, 0, 0, None, 100, 50, wait=True)
 
 
@@ -254,12 +277,15 @@ def movePieceAndRotate(square1 : str, square2 : str):
     unrotate()
     rotate()
     movePiece(square1, square2)
-
 if __name__ == "__main__":
 
-    instantiateArm()
 
-    calibrate()
+
+    instantiateArm()
+    if (getSavedCalibration()):
+        print("Calibration loaded!")
+    else:
+        calibrate()
 
     command = ""
     print('Now you can move pieces! First input a square that has a piece to pick up, then input a target square, and voila!~')
