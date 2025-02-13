@@ -46,7 +46,7 @@ def gpt3_eval(board: chess.Board):
     return score
 
 # Load the neural network model and move it to GPU
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = 'cpu'
 model = ann.SimpleNN().to(device)
 checkpoint = torch.load("model_checkpoint.pth")
 model.load_state_dict(checkpoint['model_state_dict'])
